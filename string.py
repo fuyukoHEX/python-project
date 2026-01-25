@@ -10,3 +10,4 @@ input_text = str(input())
 target_char = input()
 
 print(count_letter(input_text, target_char))
+
