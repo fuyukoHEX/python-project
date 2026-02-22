@@ -1,8 +1,6 @@
 import json
 import sys
 
-result = []
-
 def diff(a, b, path=""):
     if isinstance(a, dict) and isinstance(b, dict):
         keys = set(a.keys()) | set(b.keys())
@@ -21,6 +19,8 @@ def diff(a, b, path=""):
 
 a = json.loads(sys.stdin.readline())
 b = json.loads(sys.stdin.readline())
+
+result = []
 diff(a, b)
 
 if result:
