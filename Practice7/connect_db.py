@@ -1,13 +1,7 @@
-import psycopg2
 import csv
+from connect import get_connection
 
-conn = psycopg2.connect(
-    host="localhost",
-    database="phonebook_db",
-    user="postgres",
-    password="Pro777aka"
-)
-conn.autocommit = True
+conn = get_connection()
 cur = conn.cursor()
 
 def create_table():
@@ -42,23 +36,40 @@ def get_users():
         cur.execute("SELECT * FROM phonebook ORDER BY id ASC")
     elif choice == "2":
         name = input("Name: ")
-        cur.execute("SELECT * FROM phonebook WHERE first_name LIKE %s", ('%' + name + '%',))
+        cur.execute("SELECT * FROM phonebook WHERE first_name ILIKE %s", ('%' + name + '%',))
     elif choice == "3":
         phone = input("Number: ")
-        cur.execute("SELECT * FROM phonebook WHERE phone LIKE %s", ('%' + phone + '%',))
+        cur.execute("SELECT * FROM phonebook WHERE phone LIKE %s", (phone + '%',))
         
     for row in cur.fetchall():
         print(f"ID: {row[0]} | Name: {row[1]} | Phone: {row[2]}")
 
 def update_user():
-    name = input("Name to update: ")
-    new_phone = input("New number: ")
-    cur.execute("UPDATE phonebook SET phone = %s WHERE first_name = %s", (new_phone, name))
+    print("1. Update name | 2. Update phone")
+    choice = input("Choice: ")
+    
+    if choice == "1":
+        old_name = input("Name to update: ")
+        new_name = input("New name: ")
+        cur.execute("UPDATE phonebook SET first_name = %s WHERE first_name = %s", (new_name, old_name))
+    elif choice == "2":
+        name = input("Name to update: ")
+        new_phone = input("New number: ")
+        cur.execute("UPDATE phonebook SET phone = %s WHERE first_name = %s", (new_phone, name))
+    
     print("Updated.")
 
 def delete_user():
-    name = input("Name to delete: ")
-    cur.execute("DELETE FROM phonebook WHERE first_name = %s", (name,))
+    print("1. By name | 2. By number")
+    choice = input("Choice: ")
+    
+    if choice == "1":
+        name = input("Name to delete: ")
+        cur.execute("DELETE FROM phonebook WHERE first_name = %s", (name,))
+    elif choice == "2":
+        phone = input("Number to delete: ")
+        cur.execute("DELETE FROM phonebook WHERE phone = %s", (phone,))
+        
     print("Deleted.")
 
 def main_menu():
