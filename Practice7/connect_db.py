@@ -1,152 +1,102 @@
 import psycopg2
 import csv
-import os
 
-try:
-    conn = psycopg2.connect(
-        host="localhost",
-        database="phonebook_db",
-        user="postgres",
-        password="Pro777aka"
-    )
-    cur = conn.cursor()
-    print("Connection successful.")
-except Exception as e:
-    print(f"Connection error: {e}")
-    exit()
+DB_PARAMS = {
+    "host": "localhost",
+    "database": "phonebook_db",
+    "user": "postgres",
+    "password": "Pro777aka"
+}
+
+def execute_query(query, params=None, fetch=False):
+    try:
+        with psycopg2.connect(**DB_PARAMS) as conn:
+            with conn.cursor() as cur:
+                cur.execute(query, params)
+                if fetch:
+                    return cur.fetchall()
+                return cur.rowcount
+    except Exception as e:
+        print(f"Connection error: {e}")
+        return None
 
 def create_table():
-    cur.execute("""
+    execute_query("""
         CREATE TABLE IF NOT EXISTS phonebook (
             id SERIAL PRIMARY KEY,
             first_name TEXT NOT NULL,
             phone TEXT NOT NULL
         )
     """)
-    conn.commit()
 
 def add_from_console():
     name = input("Name: ")
     phone = input("Phone: ")
-    
-    cur.execute(
-        "INSERT INTO phonebook (first_name, phone) VALUES (%s, %s)",
-        (name, phone)
-    )
-    conn.commit()
+    execute_query("INSERT INTO phonebook (first_name, phone) VALUES (%s, %s)", (name, phone))
     print(f"Contact {name} added.")
 
 def add_from_csv():
     filename = input("CSV filename: ")
-    
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    full_path = os.path.join(script_dir, filename)
-    
     try:
-        with open(full_path, newline='', encoding='utf-8') as csvfile:
+        with open(filename, newline='', encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile)
-            try:
-                next(reader)
-            except StopIteration:
-                print("Error: file is empty.")
-                return
-
+            next(reader, None)
             added_count = 0
             for row in reader:
                 if len(row) >= 2:
-                    cur.execute(
-                        "INSERT INTO phonebook (first_name, phone) VALUES (%s, %s)",
-                        (row[0], row[1])
-                    )
+                    execute_query("INSERT INTO phonebook (first_name, phone) VALUES (%s, %s)", (row[0], row[1]))
                     added_count += 1
-            conn.commit()
             print(f"Added {added_count} contacts.")
     except FileNotFoundError:
         print("File not found.")
 
 def get_users():
-    print("\nSearch")
-    print("1.All")
-    print("2.By name")
-    print("3.By number")
-    
+    print("\nSearch\n1.All\n2.By name\n3.By number")
     choice = input("Choice: ")
     
     if choice == "1":
-        cur.execute("SELECT * FROM phonebook ORDER BY id ASC")
+        res = execute_query("SELECT * FROM phonebook ORDER BY id ASC", fetch=True)
     elif choice == "2":
         name = input("Name: ")
-        cur.execute("SELECT * FROM phonebook WHERE first_name LIKE %s", (f'%{name}%',))
+        res = execute_query("SELECT * FROM phonebook WHERE first_name LIKE %s", (f'%{name}%',), fetch=True)
     elif choice == "3":
         phone = input("Number: ")
-        cur.execute("SELECT * FROM phonebook WHERE phone LIKE %s", (f'%{phone}%',))
+        res = execute_query("SELECT * FROM phonebook WHERE phone LIKE %s", (f'%{phone}%',), fetch=True)
     else:
         print("Invalid operation")
         return
 
-    rows = cur.fetchall()
-    
-    if not rows:
+    if not res:
         print("Not found")
     else:
         print("\nResult:")
-        for row in rows:
+        for row in res:
             print(f"ID: {row[0]} | Name: {row[1]} | Phone: {row[2]}")
 
 def update_user():
     name = input("Name to update: ")
     new_phone = input("New number: ")
-    
-    cur.execute(
-        "UPDATE phonebook SET phone = %s WHERE first_name = %s",
-        (new_phone, name)
-    )
-    
-    if cur.rowcount > 0:
-        conn.commit()
-        print(f"Number for {name} updated.")
-    else:
-        print(f"Contact {name} not found.")
+    count = execute_query("UPDATE phonebook SET phone = %s WHERE first_name = %s", (new_phone, name))
+    print(f"Number for {name} updated." if count else f"Contact {name} not found.")
 
 def delete_user():
     name = input("Name to delete: ")
-    
-    confirm = input(f"Delete {name}? (y/n): ")
-    if confirm.lower() == 'y':
-        cur.execute("DELETE FROM phonebook WHERE first_name = %s", (name,))
-        
-        if cur.rowcount > 0:
-            conn.commit()
-            print(f"Contact {name} deleted.")
-        else:
-            print(f"Contact {name} not found.")
+    if input(f"Delete {name}? (y/n): ").lower() == 'y':
+        count = execute_query("DELETE FROM phonebook WHERE first_name = %s", (name,))
+        print(f"Contact {name} deleted." if count else f"Contact {name} not found.")
     else:
         print("Cancelled.")
 
 def main_menu():
     create_table()
-    
     while True:
-        print("\nMenu:")
-        print("1.Add")
-        print("2.Load from CSV")
-        print("3.Show/Search")
-        print("4.Update")
-        print("5.Delete")
-        print("0.Exit")
-
+        print("\nMenu:\n1.Add\n2.Load from CSV\n3.Show/Search\n4.Update\n5.Delete\n0.Exit")
         choice = input("Choice: ")
-
-        if choice == "1":
-            add_from_console()
-        elif choice == "2":
-            add_from_csv()
-        elif choice == "3":
-            get_users()
-        elif choice == "4":
-            update_user()
-        elif choice == "5":
-            delete_user()
+        if choice == "1": add_from_console()
+        elif choice == "2": add_from_csv()
+        elif choice == "3": get_users()
+        elif choice == "4": update_user()
+        elif choice == "5": delete_user()
         elif choice == "0":
             print("Finished")
             break
@@ -155,8 +105,3 @@ def main_menu():
 
 if __name__ == "__main__":
     main_menu()
-    
-    if cur:
-        cur.close()
-    if conn:
-        conn.close()
