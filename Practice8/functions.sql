@@ -3,7 +3,7 @@ RETURNS TABLE(name VARCHAR, phone VARCHAR) AS $$
 BEGIN
     RETURN QUERY 
     SELECT c.name, c.phone 
-    FROM contacts c
+    FROM phonebook c
     WHERE c.name ILIKE '%' || p_pattern || '%'
        OR c.phone ILIKE '%' || p_pattern || '%';
 END;
@@ -14,7 +14,7 @@ RETURNS TABLE(name VARCHAR, phone VARCHAR) AS $$
 BEGIN
     RETURN QUERY 
     SELECT c.name, c.phone 
-    FROM contacts c
+    FROM phonebook c
     ORDER BY c.name
     LIMIT p_limit OFFSET p_offset;
 END;
