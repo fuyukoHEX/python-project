@@ -8,15 +8,15 @@ def create_table():
     cur.execute("""
         CREATE TABLE IF NOT EXISTS phonebook (
             id SERIAL PRIMARY KEY,
-            first_name TEXT,
-            phone TEXT
+            name VARCHAR(255) UNIQUE NOT NULL,
+            phone VARCHAR(50) NOT NULL
         )
     """)
 
 def add_from_console():
     name = input("Name: ")
     phone = input("Phone: ")
-    cur.execute("INSERT INTO phonebook (first_name, phone) VALUES (%s, %s)", (name, phone))
+    cur.execute("INSERT INTO phonebook (name, phone) VALUES (%s, %s)", (name, phone))
     print("Contact added.")
 
 def add_from_csv():
@@ -25,7 +25,7 @@ def add_from_csv():
         reader = csv.reader(file)
         next(reader)
         for row in reader:
-            cur.execute("INSERT INTO phonebook (first_name, phone) VALUES (%s, %s)", (row[0], row[1]))
+            cur.execute("INSERT INTO phonebook (name, phone) VALUES (%s, %s)", (row[0], row[1]))
     print("Contacts from CSV added.")
 
 def get_users():
@@ -36,7 +36,7 @@ def get_users():
         cur.execute("SELECT * FROM phonebook ORDER BY id ASC")
     elif choice == "2":
         name = input("Name: ")
-        cur.execute("SELECT * FROM phonebook WHERE first_name ILIKE %s", ('%' + name + '%',))
+        cur.execute("SELECT * FROM phonebook WHERE name ILIKE %s", ('%' + name + '%',))
     elif choice == "3":
         phone = input("Number: ")
         cur.execute("SELECT * FROM phonebook WHERE phone LIKE %s", (phone + '%',))
@@ -51,11 +51,11 @@ def update_user():
     if choice == "1":
         old_name = input("Name to update: ")
         new_name = input("New name: ")
-        cur.execute("UPDATE phonebook SET first_name = %s WHERE first_name = %s", (new_name, old_name))
+        cur.execute("UPDATE phonebook SET name = %s WHERE name = %s", (new_name, old_name))
     elif choice == "2":
         name = input("Name to update: ")
         new_phone = input("New number: ")
-        cur.execute("UPDATE phonebook SET phone = %s WHERE first_name = %s", (new_phone, name))
+        cur.execute("UPDATE phonebook SET phone = %s WHERE name = %s", (new_phone, name))
     
     print("Updated.")
 
@@ -65,7 +65,7 @@ def delete_user():
     
     if choice == "1":
         name = input("Name to delete: ")
-        cur.execute("DELETE FROM phonebook WHERE first_name = %s", (name,))
+        cur.execute("DELETE FROM phonebook WHERE name = %s", (name,))
     elif choice == "2":
         phone = input("Number to delete: ")
         cur.execute("DELETE FROM phonebook WHERE phone = %s", (phone,))
