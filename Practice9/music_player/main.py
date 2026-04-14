@@ -5,7 +5,6 @@ pygame.init()
 screen = pygame.display.set_mode((400, 200))
 pygame.display.set_caption("Music Player")
 
-# 1. Создаем шрифт
 font = pygame.font.Font(None, 30)
 
 running = True
